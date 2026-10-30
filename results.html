@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>පාසල් මැතිවරණ ප්‍රතිඵල - Admin Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS CDN -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Font: Noto Sans Sinhala -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans Sinhala', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 py-4 px-6 flex justify-between items-center shadow-lg sticky top-0 z-50">
+        <div>
+            <h1 class="text-base md:text-xl font-extrabold tracking-wider text-indigo-400">📊 සජීවී මැතිවරණ ප්‍රතිඵල</h1>
+            <p class="text-xs text-slate-400 mt-0.5">පරිපාලක විශ්ලේෂණ පාලක මණ්ඩලය (Admin Dashboard)</p>
+        </div>
+        <div class="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-semibold text-emerald-400 tracking-wide">සජීවීව ක්‍රියාත්මකයි</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-5xl w-full mx-auto p-4 md:p-8 space-y-8">
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <p class="text-xs text-slate-400 uppercase font-semibold">සස්ථාපිත මුළු ඡන්ද</p>
+                <h3 id="total-votes" class="text-3xl font-extrabold text-indigo-400 mt-2">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Grade 6-9 ප්‍රමුඛයා</p>
+                <h3 id="top-6-9" class="text-base md:text-lg font-bold text-emerald-400 mt-2 truncate">දත්ත නැත</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Grade 10-13 ප්‍රමුඛයා</p>
+                <h3 id="top-10-13" class="text-base md:text-lg font-bold text-emerald-400 mt-2 truncate">දත්ත නැත</h3>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col items-center">
+                <h3 class="text-xs uppercase font-bold text-slate-400 mb-4 tracking-wider">Grade 6-9 ඡන්ද අනුපාතය</h3>
+                <div class="w-full max-w-[260px] h-[260px] relative">
+                    <canvas id="chart-6-9"></canvas>
+                </div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col items-center">
+                <h3 class="text-xs uppercase font-bold text-slate-400 mb-4 tracking-wider">Grade 10-13 ඡන්ද අනුපාතය</h3>
+                <div class="w-full max-w-[260px] h-[260px] relative">
+                    <canvas id="chart-10-13"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category 1: Grade 6-9 Results Details -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold text-slate-200 flex items-center gap-2">🏫 Grade 6-9 ශ්‍රේණි ප්‍රතිඵල</h2>
+                <span id="sum-6-9" class="text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full">ඡන්ද: 0</span>
+            </div>
+            <div id="container-6-9" class="space-y-4">
+                <div class="text-center text-slate-500 py-6 text-sm">පූරණය වෙමින් පවතී...</div>
+            </div>
+        </div>
+
+        <!-- Category 2: Grade 10-13 Results Details -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold text-slate-200 flex items-center gap-2">🎓 Grade 10-13 ශ්‍රේණි ප්‍රතිඵල</h2>
+                <span id="sum-10-13" class="text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full">ඡන්ද: 0</span>
+            </div>
+            <div id="container-10-13" class="space-y-4">
+                <div class="text-center text-slate-500 py-6 text-sm">පූරණය වෙමින් පවතී...</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-slate-600 border-t border-slate-900 bg-slate-950">
+        පරිපාලක සජීවී පාලක මණ්ඩලය &copy; 2026
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        const SUPABASE_URL = "https://nmleeunqaulfyrvexxhn.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tbGVldW5xYXVsZnlydmV4eGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNjc3NDcsImV4cCI6MjEwODg0Mzc0N30.7NQeU94sTqQOeskwtvwX4_kph_rufxlTi5cuRju24KU";
+
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const container6_9 = document.getElementById('container-6-9');
+        const container10_13 = document.getElementById('container-10-13');
+        const totalVotesElement = document.getElementById('total-votes');
+        const sum6_9Element = document.getElementById('sum-6-9');
+        const sum10_13Element = document.getElementById('sum-10-13');
+        const top6_9Element = document.getElementById('top-6-9');
+        const top10_13Element = document.getElementById('top-10-13');
+
+        let chart69Instance = null;
+        let chart1013Instance = null;
+
+        async function fetchAndRenderResults() {
+            try {
+                const { data: candidates, error } = await supabaseClient
+                    .from('candidates')
+                    .select('*')
+                    .order('votes', { ascending: false });
+
+                if (error) throw error;
+
+                renderCategories(candidates || []);
+            } catch (err) {
+                console.error("දෝෂයකි:", err.message);
+            }
+        }
+
+        function renderCategories(candidates) {
+            const list6_9 = [];
+            const list10_13 = [];
+
+            candidates.forEach(c => {
+                const cat = (c.grade_category || 'Grade 6-9').trim().toLowerCase();
+                if (cat === 'grade 10-13') {
+                    list10_13.push(c);
+                } else {
+                    list6_9.push(c);
+                }
+            });
+
+            list6_9.sort((a, b) => Number(b.votes || 0) - Number(a.votes || 0));
+            list10_13.sort((a, b) => Number(b.votes || 0) - Number(a.votes || 0));
+
+            // Render Grade 6-9
+            let total6_9 = 0;
+            container6_9.innerHTML = '';
+            if (list6_9.length === 0) {
+                container6_9.innerHTML = '<div class="text-center text-slate-500 py-4 text-xs">අපේක්ෂකයින් නොමැත.</div>';
+                top6_9Element.textContent = "දත්ත නැත";
+            } else {
+                const max6_9 = Math.max(...list6_9.map(c => Number(c.votes || 0)), 1);
+                total6_9 = list6_9.reduce((sum, c) => sum + Number(c.votes || 0), 0);
+                top6_9Element.textContent = list6_9[0].name + ` (${list6_9[0].votes || 0} ඡන්ද)`;
+
+                list6_9.forEach((c, index) => {
+                    const votes = Number(c.votes || 0);
+                    const pct = Math.round((votes / max6_9) * 100);
+                    container6_9.appendChild(createResultCard(c, index + 1, votes, pct));
+                });
+            }
+            sum6_9Element.textContent = `මුළු ඡන්ද: ${total6_9}`;
+            updateChart('chart-6-9', list6_9, 'chart69Instance');
+
+            // Render Grade 10-13
+            let total10_13 = 0;
+            container10_13.innerHTML = '';
+            if (list10_13.length === 0) {
+                container10_13.innerHTML = '<div class="text-center text-slate-500 py-4 text-xs">අපේක්ෂකයින් නොමැත.</div>';
+                top10_13Element.textContent = "දත්ත නැත";
+            } else {
+                const max10_13 = Math.max(...list10_13.map(c => Number(c.votes || 0)), 1);
+                total10_13 = list10_13.reduce((sum, c) => sum + Number(c.votes || 0), 0);
+                top10_13Element.textContent = list10_13[0].name + ` (${list10_13[0].votes || 0} ඡන්ද)`;
+
+                list10_13.forEach((c, index) => {
+                    const votes = Number(c.votes || 0);
+                    const pct = Math.round((votes / max10_13) * 100);
+                    container10_13.appendChild(createResultCard(c, index + 1, votes, pct));
+                });
+            }
+            sum10_13Element.textContent = `මුළු ඡන්ද: ${total10_13}`;
+            updateChart('chart-10-13', list10_13, 'chart1013Instance');
+
+            totalVotesElement.textContent = total6_9 + total10_13;
+        }
+
+        function createResultCard(candidate, rank, votes, percentage) {
+            const avatarUrl = candidate.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${candidate.name}`;
+            const card = document.createElement('div');
+            card.className = "bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 shadow-sm";
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-black text-slate-500 w-5">#${rank}</span>
+                        <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover bg-slate-800 border border-slate-700">
+                        <div>
+                            <h3 class="font-bold text-slate-100 text-sm">${candidate.name}</h3>
+                            <p class="text-xs text-indigo-400 font-medium">${candidate.position || 'අපේක්ෂකයා'}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-base font-extrabold text-white">${votes}</span>
+                        <span class="text-[10px] text-slate-400 block">ඡන්ද</span>
+                    </div>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                </div>
+            `;
+            return card;
+        }
+
+        function updateChart(canvasId, candidatesList, instanceName) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const labels = candidatesList.map(c => c.name);
+            const data = candidatesList.map(c => Number(c.votes || 0));
+
+            const backgroundColors = [
+                '#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#14b8a6', '#f43f5e'
+            ];
+
+            if (canvasId === 'chart-6-9') {
+                if (chart69Instance) chart69Instance.destroy();
+            } else {
+                if (chart1013Instance) chart1013Instance.destroy();
+            }
+
+            const newChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: '#0f172a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#94a3b8',
+                                font: {
+                                    family: "'Noto Sans Sinhala', sans-serif",
+                                    size: 11
+                                },
+                                boxWidth: 12
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (canvasId === 'chart-6-9') chart69Instance = newChart;
+            else chart1013Instance = newChart;
+        }
+
+        // Initial fetch
+        fetchAndRenderResults();
+
+        // Realtime Subscription
+        supabaseClient
+            .channel('public:candidates')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'candidates' },
+                () => {
+                    fetchAndRenderResults();
+                }
+            )
+            .subscribe();
+    </script>
+</body>
+</html>
